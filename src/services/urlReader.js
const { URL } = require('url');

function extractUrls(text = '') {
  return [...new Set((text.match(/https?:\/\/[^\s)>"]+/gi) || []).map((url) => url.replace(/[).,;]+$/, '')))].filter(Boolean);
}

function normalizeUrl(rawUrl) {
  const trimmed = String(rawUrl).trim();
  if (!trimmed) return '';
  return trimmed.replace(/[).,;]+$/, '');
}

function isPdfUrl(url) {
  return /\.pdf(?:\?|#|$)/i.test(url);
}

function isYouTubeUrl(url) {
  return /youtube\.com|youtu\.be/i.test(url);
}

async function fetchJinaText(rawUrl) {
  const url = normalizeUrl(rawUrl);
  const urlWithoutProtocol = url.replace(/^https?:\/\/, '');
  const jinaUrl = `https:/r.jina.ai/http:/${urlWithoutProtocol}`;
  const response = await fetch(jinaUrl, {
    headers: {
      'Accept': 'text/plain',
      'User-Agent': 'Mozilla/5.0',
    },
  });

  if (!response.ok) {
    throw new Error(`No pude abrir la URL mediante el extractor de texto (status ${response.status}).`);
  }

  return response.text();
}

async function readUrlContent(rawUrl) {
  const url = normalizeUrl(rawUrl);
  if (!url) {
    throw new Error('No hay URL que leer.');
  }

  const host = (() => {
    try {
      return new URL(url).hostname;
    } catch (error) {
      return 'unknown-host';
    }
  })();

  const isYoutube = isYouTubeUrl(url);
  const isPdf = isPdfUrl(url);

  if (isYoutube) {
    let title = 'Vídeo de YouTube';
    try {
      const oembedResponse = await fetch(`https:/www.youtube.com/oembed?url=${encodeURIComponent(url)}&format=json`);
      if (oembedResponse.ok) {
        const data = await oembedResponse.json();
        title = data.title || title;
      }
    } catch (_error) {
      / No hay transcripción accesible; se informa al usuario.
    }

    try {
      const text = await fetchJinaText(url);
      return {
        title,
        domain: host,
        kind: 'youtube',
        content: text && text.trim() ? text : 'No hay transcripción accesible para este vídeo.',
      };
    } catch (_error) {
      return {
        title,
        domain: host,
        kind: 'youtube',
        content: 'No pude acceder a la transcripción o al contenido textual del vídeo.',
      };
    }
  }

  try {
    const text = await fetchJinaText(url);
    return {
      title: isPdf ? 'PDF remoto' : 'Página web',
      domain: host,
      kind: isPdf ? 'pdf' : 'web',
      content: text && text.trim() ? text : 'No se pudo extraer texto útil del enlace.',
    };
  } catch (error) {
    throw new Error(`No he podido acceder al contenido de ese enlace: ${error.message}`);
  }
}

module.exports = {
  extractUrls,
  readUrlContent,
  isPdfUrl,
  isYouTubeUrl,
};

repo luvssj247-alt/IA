@@ -1,0 +1,52 @@
+const { MODEL_NAME, OPENROUTER_BASE_URL, ALLOW_FALLBACK_MODEL } = require('../config');
+
+async function callOpenRouter({ messages, requestSource = 'chat' }) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error('Falta OPENROUTER_API_KEY. No puedo contactar OpenRouter.');
+  }
+
+  const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://github.com/luvssj247-alt/IA',
+      'X-Title': 'IA factual roleplay app',
+    },
+    body: JSON.stringify({
+      model: MODEL_NAME,
+      messages,
+      temperature: 0.2,
+      max_tokens: 1200,
+    }),
+  });
+
+  if (!response.ok) {
+    const rawText = await response.text();
+    throw new Error(`OpenRouter devolvió un error: ${response.status}. Modelo requerido: ${MODEL_NAME}. Detalle: ${rawText}`);
+  }
+
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content || '';
+
+  if (!content || !content.trim()) {
+    throw new Error('OpenRouter respondió sin contenido útil.');
+  }
+
+  if (!ALLOW_FALLBACK_MODEL) {
+    // No se hace fallback oculto. La aplicación respeta el modelo principal.
+  }
+
+  return {
+    content,
+    model: data?.model || MODEL_NAME,
+    requestSource,
+  };
+}
+
+module.exports = {
+  callOpenRouter,
+  MODEL_NAME,
+};

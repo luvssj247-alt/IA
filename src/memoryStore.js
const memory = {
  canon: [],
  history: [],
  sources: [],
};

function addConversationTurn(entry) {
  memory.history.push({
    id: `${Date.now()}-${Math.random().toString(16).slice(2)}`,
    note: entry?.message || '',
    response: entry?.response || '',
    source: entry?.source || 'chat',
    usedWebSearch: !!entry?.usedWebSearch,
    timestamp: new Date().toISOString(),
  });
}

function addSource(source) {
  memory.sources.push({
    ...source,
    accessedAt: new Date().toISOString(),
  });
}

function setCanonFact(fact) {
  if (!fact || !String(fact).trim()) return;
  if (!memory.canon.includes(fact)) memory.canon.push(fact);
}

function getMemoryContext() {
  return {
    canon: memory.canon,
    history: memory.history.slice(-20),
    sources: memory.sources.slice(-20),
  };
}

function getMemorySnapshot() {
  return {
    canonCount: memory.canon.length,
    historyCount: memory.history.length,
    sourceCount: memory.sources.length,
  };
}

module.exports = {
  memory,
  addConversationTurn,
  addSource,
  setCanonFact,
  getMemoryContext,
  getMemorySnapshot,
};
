@@ -1,0 +1,8 @@
+const MODEL_NAME = 'meta-llama/llama-3-8b-instruct:free';
+const ALLOW_FALLBACK_MODEL = false;
+
+module.exports = {
+  MODEL_NAME,
+  ALLOW_FALLBACK_MODEL,
+  OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
+};

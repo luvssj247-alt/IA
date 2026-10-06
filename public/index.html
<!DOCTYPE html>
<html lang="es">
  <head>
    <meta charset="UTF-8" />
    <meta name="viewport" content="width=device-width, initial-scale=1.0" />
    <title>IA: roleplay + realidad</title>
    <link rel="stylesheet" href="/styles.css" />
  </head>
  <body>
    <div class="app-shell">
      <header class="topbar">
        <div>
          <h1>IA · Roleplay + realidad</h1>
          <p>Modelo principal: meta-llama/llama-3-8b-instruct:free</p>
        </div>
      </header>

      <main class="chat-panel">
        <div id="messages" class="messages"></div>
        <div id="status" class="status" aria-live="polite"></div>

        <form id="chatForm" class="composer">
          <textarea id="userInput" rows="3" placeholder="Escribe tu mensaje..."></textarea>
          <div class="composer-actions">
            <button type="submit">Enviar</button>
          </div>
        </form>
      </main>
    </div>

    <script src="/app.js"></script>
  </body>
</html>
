@@ -1,0 +1,77 @@
+const { addSource } = require('../memoryStore');
+
+function normalizeQuestionForSearch(question) {
+  return String(question)
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/\b(busca|buscar|comprueba|compruébalo|investiga|verifica|qué|cuál|cómo|por qué)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function searchWeb(question) {
+  const cleaned = normalizeQuestionForSearch(question);
+  if (!cleaned) return [];
+
+  const endpoint = `https://api.duckduckgo.com/?q=${encodeURIComponent(cleaned)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+  const response = await fetch(endpoint, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`La búsqueda no pudo completarse (status ${response.status}).`);
+  }
+
+  const data = await response.json();
+  const results = [];
+
+  if (data.AbstractURL && data.AbstractText) {
+    results.push({
+      title: data.Heading || 'Resumen de DuckDuckGo',
+      url: data.AbstractURL,
+      snippet: data.AbstractText,
+      abstract: data.AbstractText,
+      domain: new URL(data.AbstractURL).hostname,
+      status: 'ok',
+    });
+    addSource({
+      title: data.Heading || 'Resumen de DuckDuckGo',
+      url: data.AbstractURL,
+      domain: new URL(data.AbstractURL).hostname,
+      summary: data.AbstractText,
+      kind: 'search-result',
+    });
+  }
+
+  const relatedTopics = Array.isArray(data.RelatedTopics) ? data.RelatedTopics : [];
+  for (const topic of relatedTopics.slice(0, 6)) {
+    if (!topic) continue;
+    const url = topic.FirstURL || topic.Result?.match(/href="([^"]+)"/)?.[1];
+    const text = topic.Text || topic.Result || '';
+    if (!url || !text) continue;
+
+    results.push({
+      title: text.replace(/<[^>]+>/g, '').slice(0, 120) || 'Fuente relacionada',
+      url,
+      snippet: text.replace(/<[^>]+>/g, '').slice(0, 260),
+      domain: (() => { try { return new URL(url).hostname; } catch { return 'duckduckgo.com'; } })(),
+      status: 'ok',
+    });
+    addSource({
+      title: 'Fuente relacionada',
+      url,
+      domain: (() => { try { return new URL(url).hostname; } catch { return 'duckduckgo.com'; } })(),
+      summary: text.replace(/<[^>]+>/g, '').slice(0, 260),
+      kind: 'search-result',
+    });
+  }
+
+  return results.slice(0, 4);
+}
+
+module.exports = {
+  searchWeb,
+  normalizeQuestionForSearch,
+};
