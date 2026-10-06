@@ -8,20 +8,36 @@
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar">
-        <div>
-          <h1>IA · Roleplay + realidad</h1>
-          <p>Modelo principal: meta-llama/llama-3-8b-instruct:free</p>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Historial</h2>
+          <button id="newChatBtn" class="ghost-btn" type="button">+ Nueva</button>
         </div>
-        <div class="api-config">
-          <input id="apiKeyInput" type="password" placeholder="Pegar OpenRouter API key" aria-label="API key" />
-          <button id="saveApiKeyBtn">Guardar clave</button>
-          <span id="apiKeyStatus" class="muted"></span>
-        </div>
-      </header>
+
+        <div id="chatList" class="chat-list" aria-live="polite"></div>
+
+        <button id="clearAllChatsBtn" class="danger-btn" type="button">Vaciar todo</button>
+      </aside>
 
       <main class="chat-panel">
-        <div id="messages" class="messages"></div>
+        <header class="topbar">
+          <div>
+            <h1>IA · Roleplay + realidad</h1>
+            <p>Modelo principal: meta-llama/llama-3-8b-instruct:free</p>
+          </div>
+          <div class="api-config">
+            <input id="apiKeyInput" type="password" placeholder="Pegar OpenRouter API key" aria-label="API key" />
+            <button id="saveApiKeyBtn" type="button">Guardar clave</button>
+            <span id="apiKeyStatus" class="muted"></span>
+          </div>
+        </header>
+
+        <div class="chat-toolbar">
+          <button id="clearChatBtn" type="button" class="secondary-btn">Vaciar conversación</button>
+          <button id="deleteChatBtn" type="button" class="secondary-btn danger">Borrar historial</button>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
         <div id="status" class="status" aria-live="polite"></div>
 
         <form id="chatForm" class="composer">
